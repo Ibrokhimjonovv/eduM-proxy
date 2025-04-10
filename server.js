@@ -35,7 +35,7 @@ app.use(
 );
 
 // ✅ TO‘G‘RI STATIC SERVE
-// app.use(express.static(path.join(__dirname, '../client/build')));
+app.use(express.static(path.join(__dirname, '../client/build')));
 
 // // ✅ React routing uchun fallback
 // app.get('*', (req, res) => {
