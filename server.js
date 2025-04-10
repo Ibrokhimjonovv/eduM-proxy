@@ -6,7 +6,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 app.use(cors());
 
-// API endpointlarini proksi orqali yuborish
+// Proxy routes
 app.use(
   '/api',
   createProxyMiddleware({
@@ -16,7 +16,6 @@ app.use(
   })
 );
 
-// Order uchun alohida proxy (agar boshqa port yoki server bo'lsa)
 app.use(
   '/order/create',
   createProxyMiddleware({
@@ -26,28 +25,24 @@ app.use(
   })
 );
 
-// Media fayllar uchun
 app.use(
   '/api/media',
   createProxyMiddleware({
     target: 'http://api.edumark.uz',
     changeOrigin: true,
-    pathRewrite: {
-      '^/api/media': '/media',
-    },
+    pathRewrite: { '^/api/media': '/media' },
   })
 );
 
-// === 🚀 React build fayllarini xizmat qilish ===
-app.use(express.static(path.join(__dirname, '../client/build')));
+// ✅ TO‘G‘RI STATIC SERVE
+// app.use(express.static(path.join(__dirname, '../client/build')));
 
-// Boshqa barcha route uchun Reactning index.html faylini yuborish
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build/index.html'));
-});
+// // ✅ React routing uchun fallback
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client/build/index.html'));
+// });
 
-// Serverni ishga tushirish
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Proxy server http://localhost:${PORT} da ishga tushdi!`);
 });
