@@ -1,48 +1,48 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
+
+// 1. Avval cors sozlamalari
 app.use(cors());
 
-// Proxy routes
-app.use(
-  '/api',
-  createProxyMiddleware({
-    target: 'https://api.edumark.uz/api',
-    changeOrigin: true,
-    pathRewrite: { '^/api': '/api' },
-  })
-);
+// 2. Express.json() middleware
+app.use(express.json());
 
-app.use(
-  '/order/create',
-  createProxyMiddleware({
-    target: 'https://api.edumark.uz/api/order/create',
-    changeOrigin: true,
-    pathRewrite: { '^/order': '' },
-  })
-);
+// 3. Proxy sozlamalari (path-to-regexp ishlatmasdan)
+const proxyOptions = {
+  target: 'https://api.edumark.uz',
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api': '/api'
+  },
+  onProxyReq: (proxyReq, req) => {
+    if (req.body) {
+      const bodyData = JSON.stringify(req.body);
+      proxyReq.setHeader('Content-Type', 'application/json');
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+      proxyReq.write(bodyData);
+    }
+  }
+};
 
-app.use(
-  '/api/media',
-  createProxyMiddleware({
-    target: 'http://api.edumark.uz',
-    changeOrigin: true,
-    pathRewrite: { '^/api/media': '/media' },
-  })
-);
+// Proxy middleware (regexpsiz)
+app.use('/api', createProxyMiddleware(proxyOptions));
 
-// ✅ TO‘G‘RI STATIC SERVE
+// Static fayllar
 app.use(express.static(path.join(__dirname, '../client/build')));
 
-// // ✅ React routing uchun fallback
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../client/build/index.html'));
-// });
+// Fallback route (regexpsiz)
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build/index.html'));
+});
 
+// Serverni ishga tushirish
 const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`Proxy server http://localhost:${PORT} da ishga tushdi!`);
+const server = http.createServer(app);
+server.listen(PORT, () => {
+  console.log(`Server http://localhost:${PORT} da ishga tushdi!`);
 });
